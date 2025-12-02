@@ -4,7 +4,9 @@ using UnityEngine.InputSystem;
 public class GameController : MonoBehaviour
 {
     [Header("Config")] public LevelData currentLevel;
+
     [Header("References")] public BoardRenderer boardRenderer;
+    public APIRequestor apiRequestor;
 
     // Game Board
     private GridState _currentGridState;
@@ -53,7 +55,7 @@ public class GameController : MonoBehaviour
         MoveOnBoard(direction);
 
         // send GridState
-        Debug.Log(_currentGridState.GetGridStateString());
+        apiRequestor.PostGridState(_currentGridState.GetGridStateString());
     }
 
     private void MoveOnBoard(Vector2Int direction)

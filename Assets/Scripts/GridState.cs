@@ -134,6 +134,6 @@ public class GridState
             sb.Append("\n");
         }
 
-        return sb.ToString();
+        return sb.ToString().Trim();
     }
 }
