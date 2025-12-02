@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Text;
 
 public class GridState
 {
@@ -37,8 +38,14 @@ public class GridState
         return _cratesPos.Contains(pos);
     }
 
-    public bool TryMove(Vector2Int direction)
+    public bool TryMove(Vector2Int direction, out MovementState movementState)
     {
+        movementState = new MovementState
+        {
+            PlayerStartPos = _playerPos,
+            Direction = direction
+        };
+
         var playerTargetPos = _playerPos + direction;
 
         if (!IsWalkable(playerTargetPos)) return false;
@@ -57,9 +64,76 @@ public class GridState
         var targetCrateIdx = _cratesPos.IndexOf(playerTargetPos);
         _cratesPos[targetCrateIdx] = crateTargetPos;
 
+        // move crate
+        movementState.PushedCrate = true;
+        movementState.CrateStartPos = playerTargetPos;
+        movementState.CrateEndPos = crateTargetPos;
+
         // move player
         _playerPos = playerTargetPos;
-
         return true;
+    }
+
+    public string GetGridStateString()
+    {
+        var sb = new StringBuilder();
+
+        for (var y = Height - 1; y >= 0; y--)
+        {
+            for (var x = 0; x < Width; x++)
+            {
+                var pos = new Vector2Int(x, y);
+                var tileType = GetTile(pos);
+
+                var isPlayerOnTile = pos == _playerPos;
+
+                switch (tileType)
+                {
+                    case TileType.Empty:
+                        sb.Append(" ");
+                        break;
+
+                    case TileType.Wall:
+                        sb.Append("#");
+                        break;
+
+                    case TileType.Floor:
+                        if (isPlayerOnTile)
+                        {
+                            sb.Append("p");
+                            break;
+                        }
+
+                        if (IsCrateAt(pos))
+                        {
+                            sb.Append("c");
+                            break;
+                        }
+
+                        sb.Append(".");
+                        break;
+
+                    case TileType.Goal:
+                        if (isPlayerOnTile)
+                        {
+                            sb.Append("P");
+                            break;
+                        }
+
+                        if (IsCrateAt(pos))
+                        {
+                            sb.Append("C");
+                            break;
+                        }
+
+                        sb.Append("+");
+                        break;
+                }
+            }
+
+            sb.Append("\n");
+        }
+
+        return sb.ToString();
     }
 }

@@ -12,6 +12,9 @@ public class GameController : MonoBehaviour
     // Player Control
     private PlayerInput _playerInput;
 
+    // used to lock user input
+    private bool _isMoving;
+
     private void Awake()
     {
         _playerInput = new PlayerInput();
@@ -43,19 +46,22 @@ public class GameController : MonoBehaviour
         // prevent diagonal movement
         if (direction.x != 0 && direction.y != 0) return;
 
+        // lock user input
+        if (_isMoving) return;
+
+        // move
         MoveOnBoard(direction);
+
+        // send GridState
+        Debug.Log(_currentGridState.GetGridStateString());
     }
 
     private void MoveOnBoard(Vector2Int direction)
     {
-        if (_currentGridState.TryMove(direction))
-        {
-            Debug.Log("Move!");
-            boardRenderer.InitBoard(_currentGridState);
-        }
-        else
-        {
-            Debug.Log("Blocked!");
-        }
+        if (!_currentGridState.TryMove(direction, out var movementState)) return;
+
+        // lock user input
+        _isMoving = true;
+        boardRenderer.AnimateMove(movementState, () => { _isMoving = false; });
     }
 }

@@ -512,6 +512,7 @@ MonoBehaviour:
   floorPrefab: {fileID: 1277628364675308252, guid: cc05987c0cd0940d1b7f57b6b9ad3294, type: 3}
   wallPrefab: {fileID: 7462419437244130327, guid: 2109782ad3b404f6b98159b74ff02658, type: 3}
   goalPrefab: {fileID: 8175802569999437442, guid: 508778362e3b14a1ba7e19969e878d65, type: 3}
+  moveDuration: 0.3
 --- !u!4 &1876353589
 Transform:
   m_ObjectHideFlags: 0

@@ -4,7 +4,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "NewFile", menuName = "Sokoban/LevelData")]
 public class LevelData : ScriptableObject
 {
-    [Header("Layout(#=Wall, .=Floor, @=Player, $=Crate, +=Goal)")]
+    [Header("Layout(#=Wall, .=Floor, p=Player, c=Crate, +=Goal)")]
     public List<string> rows = new();
 
     public int Height => rows.Count;

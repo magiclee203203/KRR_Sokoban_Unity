@@ -32,12 +32,12 @@ public class LevelBuilder
                         tileType = TileType.Goal;
                         break;
 
-                    case '@':
+                    case 'p':
                         tileType = TileType.Floor;
                         playerPos = new Vector2Int(x, GetInversedY(data.Height, y));
                         break;
 
-                    case '$':
+                    case 'c':
                         tileType = TileType.Floor;
                         cratesPos.Add(new Vector2Int(x, GetInversedY(data.Height, y)));
                         break;
