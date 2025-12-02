@@ -109,4 +109,16 @@ public class BoardRenderer : MonoBehaviour
         seq.Join(crateMove);
         seq.Play();
     }
+
+    public void RotatePlayer(Vector2Int direction)
+    {
+        _playerObj.transform.rotation = direction switch
+        {
+            { x: 0, y: 1 } => Quaternion.Euler(0, 180, 0),
+            { x: 0, y: -1 } => Quaternion.Euler(0, 0, 0),
+            { x: 1, y: 0 } => Quaternion.Euler(0, -90, 0),
+            { x: -1, y: 0 } => Quaternion.Euler(0, 90, 0),
+            _ => _playerObj.transform.rotation
+        };
+    }
 }

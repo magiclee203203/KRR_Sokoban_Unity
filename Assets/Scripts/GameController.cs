@@ -15,7 +15,7 @@ public class GameController : MonoBehaviour
     private PlayerInput _playerInput;
 
     // used to lock user input
-    private bool _isMoving;
+    private bool _isPlayerMoving;
 
     private void Awake()
     {
@@ -49,21 +49,28 @@ public class GameController : MonoBehaviour
         if (direction.x != 0 && direction.y != 0) return;
 
         // lock user input
-        if (_isMoving) return;
+        if (_isPlayerMoving) return;
+
+        // rotate player
+        boardRenderer.RotatePlayer(direction);
 
         // move
-        MoveOnBoard(direction);
+        var moved = MoveOnBoard(direction);
 
         // send GridState
-        apiRequestor.PostGridState(_currentGridState.GetGridStateString());
+        if (moved)
+        {
+            apiRequestor.PostGridState(_currentGridState.GetGridStateString());
+        }
     }
 
-    private void MoveOnBoard(Vector2Int direction)
+    private bool MoveOnBoard(Vector2Int direction)
     {
-        if (!_currentGridState.TryMove(direction, out var movementState)) return;
+        if (!_currentGridState.TryMove(direction, out var movementState)) return false;
 
         // lock user input
-        _isMoving = true;
-        boardRenderer.AnimateMove(movementState, () => { _isMoving = false; });
+        _isPlayerMoving = true;
+        boardRenderer.AnimateMove(movementState, () => { _isPlayerMoving = false; });
+        return true;
     }
 }
