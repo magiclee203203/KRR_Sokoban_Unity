@@ -6,13 +6,26 @@ using Proyecto26;
 [Serializable]
 public class PostBody
 {
-    public string state;
+    public string contents;
 }
 
 [Serializable]
-public class ServerResp
+public class MoveCommand
 {
-    public string resp;
+    public string direction;
+    public int time;
+}
+
+[Serializable]
+public class MoveCommandResp
+{
+    public List<MoveCommand> commands;
+}
+
+[Serializable]
+public class LevelDataResp
+{
+    public string levelData;
 }
 
 public class APIRequestor : MonoBehaviour
@@ -21,8 +34,21 @@ public class APIRequestor : MonoBehaviour
 
     public void PostGridState(string gridState)
     {
-        RestClient.Post<ServerResp>(endpoint, new PostBody { state = gridState })
-            .Then(res => { Debug.Log(res.resp); })
+        RestClient.Post<MoveCommandResp>($"{endpoint}/solve/", new PostBody { contents = gridState })
+            .Then(res =>
+            {
+                foreach (var command in res.commands)
+                {
+                    Debug.Log($"direction={command.direction}, time={command.time}");
+                }
+            })
+            .Catch(err => { Debug.Log("Request failed" + err); });
+    }
+
+    public void GetLevelData(Action<string> onCompleteCallback)
+    {
+        RestClient.Get<LevelDataResp>($"{endpoint}/level")
+            .Then(res => { onCompleteCallback?.Invoke(res.levelData); })
             .Catch(err => { Debug.Log("Request failed" + err); });
     }
 }

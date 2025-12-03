@@ -3,17 +3,36 @@ using UnityEngine;
 
 public class LevelBuilder
 {
-    public static GridState CreateGridStateFromData(LevelData data)
+    public static GridState CreateGridStateFromRawText(string rawText)
     {
-        var layout = new TileType[data.Width, data.Height];
+        var rows = new List<string>(rawText.Split("\n"));
+
+        // calculate size
+        var height = rows.Count;
+        var width = 0;
+
+        foreach (var row in rows)
+        {
+            if (row.Length > width)
+            {
+                width = row.Length;
+            }
+        }
+
+        return CreateGridStateFromRows(rows, width, height);
+    }
+
+    private static GridState CreateGridStateFromRows(List<string> rows, int width, int height)
+    {
+        var layout = new TileType[width, height];
         var playerPos = Vector2Int.zero;
         var cratesPos = new List<Vector2Int>();
 
-        for (var y = 0; y < data.Height; y++)
+        for (var y = 0; y < height; y++)
         {
-            var rowStr = data.rows[y];
+            var rowStr = rows[y];
 
-            for (var x = 0; x < data.Width; x++)
+            for (var x = 0; x < width; x++)
             {
                 var tileChar = rowStr[x];
                 var tileType = TileType.Empty;
@@ -34,16 +53,16 @@ public class LevelBuilder
 
                     case 'p':
                         tileType = TileType.Floor;
-                        playerPos = new Vector2Int(x, GetInversedY(data.Height, y));
+                        playerPos = new Vector2Int(x, GetInversedY(height, y));
                         break;
 
                     case 'c':
                         tileType = TileType.Floor;
-                        cratesPos.Add(new Vector2Int(x, GetInversedY(data.Height, y)));
+                        cratesPos.Add(new Vector2Int(x, GetInversedY(height, y)));
                         break;
                 }
 
-                layout[x, GetInversedY(data.Height, y)] = tileType;
+                layout[x, GetInversedY(height, y)] = tileType;
             }
         }
 

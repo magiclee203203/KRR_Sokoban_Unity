@@ -3,8 +3,6 @@ using UnityEngine.InputSystem;
 
 public class GameController : MonoBehaviour
 {
-    [Header("Config")] public LevelData currentLevel;
-
     [Header("References")] public BoardRenderer boardRenderer;
     public APIRequestor apiRequestor;
 
@@ -30,8 +28,11 @@ public class GameController : MonoBehaviour
 
     private void Start()
     {
-        _currentGridState = LevelBuilder.CreateGridStateFromData(currentLevel);
-        boardRenderer.InitBoard(_currentGridState);
+        apiRequestor.GetLevelData(levelData =>
+        {
+            _currentGridState = LevelBuilder.CreateGridStateFromRawText(levelData);
+            boardRenderer.InitBoard(_currentGridState);
+        });
     }
 
     private void OnDisable()
