@@ -32,16 +32,10 @@ public class APIRequestor : MonoBehaviour
 {
     [Header("API Endpoint")] public string endpoint;
 
-    public void PostGridState(string gridState)
+    public void PostGridState(string gridState, Action<List<MoveCommand>> onCompleteCallback)
     {
         RestClient.Post<MoveCommandResp>($"{endpoint}/solve/", new PostBody { contents = gridState })
-            .Then(res =>
-            {
-                foreach (var command in res.commands)
-                {
-                    Debug.Log($"direction={command.direction}, time={command.time}");
-                }
-            })
+            .Then(res => { onCompleteCallback?.Invoke(res.commands); })
             .Catch(err => { Debug.Log("Request failed" + err); });
     }
 

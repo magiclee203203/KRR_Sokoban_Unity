@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
-using System;
+using System.Threading.Tasks;
 
 public class BoardRenderer : MonoBehaviour
 {
@@ -75,39 +75,28 @@ public class BoardRenderer : MonoBehaviour
         _crateObjs.Clear();
     }
 
-    public void AnimateMove(MovementState movementState, Action onCompleteCallback = null)
+    public async Task AnimateMove(MovementState movementState)
     {
         var seq = DOTween.Sequence();
-        seq.OnComplete(() => { onCompleteCallback?.Invoke(); });
 
         // move player
         var playerEndPos = movementState.PlayerStartPos + movementState.Direction;
         var playerEndWorldPos = GetWorldPosition(playerEndPos.x, playerEndPos.y, true);
-        var playerMove = _playerObj.transform
-            .DOMove(playerEndWorldPos, moveDuration).SetEase(Ease.OutQuad);
+        seq.Append(_playerObj.transform.DOMove(playerEndWorldPos, moveDuration).SetEase(Ease.OutQuad));
 
-        seq.Append(playerMove);
-
-        if (!movementState.PushedCrate)
+        if (movementState.PushedCrate && _crateObjs.Remove(movementState.CrateStartPos, out var movingCrate))
         {
-            seq.Play();
-            return;
+            // update dictionary
+            _crateObjs.Add(movementState.CrateEndPos, movingCrate);
+
+            // move crate
+            var crateEndWorldPos = GetWorldPosition(
+                movementState.CrateEndPos.x, movementState.CrateEndPos.y, true
+            );
+            seq.Join(movingCrate.transform.DOMove(crateEndWorldPos, moveDuration).SetEase(Ease.OutQuad));
         }
 
-        if (!_crateObjs.Remove(movementState.CrateStartPos, out var movingCrate)) return;
-
-        // update dictionary
-        _crateObjs.Add(movementState.CrateEndPos, movingCrate);
-
-        // move crate
-        var crateEndWorldPos = GetWorldPosition(
-            movementState.CrateEndPos.x, movementState.CrateEndPos.y, true
-        );
-        var crateMove = movingCrate.transform
-            .DOMove(crateEndWorldPos, moveDuration).SetEase(Ease.OutQuad);
-
-        seq.Join(crateMove);
-        seq.Play();
+        await seq.Play().AsyncWaitForCompletion();
     }
 
     public void RotatePlayer(Vector2Int direction)
