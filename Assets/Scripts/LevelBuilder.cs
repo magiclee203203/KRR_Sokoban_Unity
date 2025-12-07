@@ -60,6 +60,16 @@ public class LevelBuilder
                         tileType = TileType.Floor;
                         cratesPos.Add(new Vector2Int(x, GetInversedY(height, y)));
                         break;
+                    
+                    case 'C':
+                        tileType = TileType.Goal;
+                        cratesPos.Add(new Vector2Int(x, GetInversedY(height, y)));
+                        break;
+                    
+                    case 'P':
+                        tileType = TileType.Goal;
+                        playerPos = new Vector2Int(x, GetInversedY(height, y));
+                        break;
                 }
 
                 layout[x, GetInversedY(height, y)] = tileType;

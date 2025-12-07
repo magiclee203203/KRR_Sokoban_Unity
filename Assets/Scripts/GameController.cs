@@ -7,6 +7,7 @@ public class GameController : MonoBehaviour
 {
     [Header("References")] public BoardRenderer boardRenderer;
     public APIRequestor apiRequestor;
+    public CameraAdjuster cameraAdjuster;
 
     // Game Board
     private GridState _currentGridState;
@@ -120,6 +121,7 @@ public class GameController : MonoBehaviour
         {
             _currentGridState = LevelBuilder.CreateGridStateFromRawText(levelData);
             boardRenderer.InitBoard(_currentGridState);
+            cameraAdjuster.AdjustCamera(boardRenderer.MapBounds);
         });
     }
 

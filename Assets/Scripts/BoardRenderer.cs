@@ -16,6 +16,20 @@ public class BoardRenderer : MonoBehaviour
     private GameObject _playerObj;
     private Dictionary<Vector2Int, GameObject> _crateObjs = new();
 
+    public Bounds MapBounds
+    {
+        get
+        {
+            var mapBounds = new Bounds(Vector3.zero, Vector3.one);
+            foreach (Transform tile in transform)
+            {
+                mapBounds.Encapsulate(tile.position);
+            }
+
+            return mapBounds;
+        }
+    }
+
     public void InitBoard(GridState gridState)
     {
         ClearBoard();
