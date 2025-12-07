@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 public class BoardRenderer : MonoBehaviour
 {
-    [Header("Prefabs")] public GameObject playerPrefab;
+    [Header("Prefabs")] public Player playerPrefab;
     public GameObject cratePrefab;
     public GameObject floorPrefab;
     public GameObject wallPrefab;
@@ -13,7 +13,7 @@ public class BoardRenderer : MonoBehaviour
 
     [Header("Animation Settings")] public float moveDuration = 0.4f;
 
-    private GameObject _playerObj;
+    private Player _playerObj;
     private Dictionary<Vector2Int, GameObject> _crateObjs = new();
 
     public Bounds MapBounds
@@ -115,13 +115,16 @@ public class BoardRenderer : MonoBehaviour
 
     public void RotatePlayer(Vector2Int direction)
     {
-        _playerObj.transform.rotation = direction switch
+        _playerObj.transform.rotation = Utils.GetEulerAngle(direction);
+    }
+
+    public void ShowHintArrow(bool show, Vector2Int direction)
+    {
+        _playerObj.ShowHintArrow(show);
+
+        if (show)
         {
-            { x: 0, y: 1 } => Quaternion.Euler(0, 180, 0),
-            { x: 0, y: -1 } => Quaternion.Euler(0, 0, 0),
-            { x: 1, y: 0 } => Quaternion.Euler(0, -90, 0),
-            { x: -1, y: 0 } => Quaternion.Euler(0, 90, 0),
-            _ => _playerObj.transform.rotation
-        };
+            _playerObj.AdjustArrowDirection(direction);
+        }
     }
 }

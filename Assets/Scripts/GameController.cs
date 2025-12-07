@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
@@ -8,6 +9,7 @@ public class GameController : MonoBehaviour
     [Header("References")] public BoardRenderer boardRenderer;
     public APIRequestor apiRequestor;
     public CameraAdjuster cameraAdjuster;
+    public ResultPanel resultPanel;
 
     // Game Board
     private GridState _currentGridState;
@@ -19,6 +21,9 @@ public class GameController : MonoBehaviour
     private bool _isPlayerMoving;
     private bool _isAutoMoving;
     private bool _stopAutoMoving;
+
+    // store hints used in manual mode 
+    private Queue<Vector2Int> _hintMoveCommands = new();
 
     private void Awake()
     {
@@ -32,11 +37,12 @@ public class GameController : MonoBehaviour
         _playerInput.Player.Move.performed += OnPlayerMoved;
         _playerInput.Player.Reset.performed += OnResetBoard;
         _playerInput.Player.AutoMove.performed += OnAutoMove;
+        _playerInput.Player.Hint.performed += OnAskForHint;
     }
 
     private void Start()
     {
-        InitBoard();
+        Init();
     }
 
     private void OnDisable()
@@ -46,6 +52,7 @@ public class GameController : MonoBehaviour
         _playerInput.Player.Move.performed -= OnPlayerMoved;
         _playerInput.Player.Reset.performed -= OnResetBoard;
         _playerInput.Player.AutoMove.performed -= OnAutoMove;
+        _playerInput.Player.Hint.performed -= OnAskForHint;
     }
 
     private void OnPlayerMoved(InputAction.CallbackContext ctx)
@@ -64,6 +71,20 @@ public class GameController : MonoBehaviour
 
         // move
         _ = MoveOnBoard(direction);
+
+        // handle hint arrow
+        if (_hintMoveCommands.Count == 0) return;
+
+        var currentHintDirection = _hintMoveCommands.Dequeue();
+        if (currentHintDirection == direction && _hintMoveCommands.Count > 0)
+        {
+            ShowHintArrow();
+        }
+        else
+        {
+            _hintMoveCommands.Clear();
+            boardRenderer.ShowHintArrow(false, Vector2Int.zero);
+        }
     }
 
     private async Task MoveOnBoard(Vector2Int direction)
@@ -73,6 +94,12 @@ public class GameController : MonoBehaviour
         _isPlayerMoving = true;
         await boardRenderer.AnimateMove(movementState);
         _isPlayerMoving = false;
+
+        // check success state
+        if (IsSuccess())
+        {
+            resultPanel.ShowSuccess();
+        }
     }
 
     private void OnResetBoard(InputAction.CallbackContext ctx)
@@ -82,7 +109,7 @@ public class GameController : MonoBehaviour
         _isPlayerMoving = false;
 
         DOTween.KillAll();
-        InitBoard();
+        Init();
     }
 
     private void OnAutoMove(InputAction.CallbackContext ctx)
@@ -90,19 +117,25 @@ public class GameController : MonoBehaviour
         if (_isPlayerMoving || _isAutoMoving) return;
 
         // send GridState
-        apiRequestor.PostGridState(_currentGridState.GetGridStateString(), async (commands) =>
+        apiRequestor.PostGridState(_currentGridState.GetGridStateString(), async resp =>
         {
+            if (!resp.solvable)
+            {
+                resultPanel.ShowFail();
+                return;
+            }
+
             _isAutoMoving = true;
             _stopAutoMoving = false;
 
-            foreach (var cmd in commands)
+            foreach (var cmd in resp.commands)
             {
                 if (_stopAutoMoving)
                 {
                     break;
                 }
 
-                var dir = ParseDirection(cmd.direction);
+                var dir = Utils.ParseDirectionString(cmd.direction);
 
                 // rotate player
                 boardRenderer.RotatePlayer(dir);
@@ -115,8 +148,40 @@ public class GameController : MonoBehaviour
         });
     }
 
-    private void InitBoard()
+    private void OnAskForHint(InputAction.CallbackContext ctx)
     {
+        resultPanel.ShowThinking();
+
+        apiRequestor.PostGridState(_currentGridState.GetGridStateString(), resp =>
+        {
+            resultPanel.Hide();
+
+            if (!resp.solvable)
+            {
+                resultPanel.ShowFail();
+                return;
+            }
+
+            // parse commands
+            foreach (var cmd in resp.commands)
+            {
+                _hintMoveCommands.Enqueue(Utils.ParseDirectionString(cmd.direction));
+            }
+
+            // _hintMoveCommands
+            ShowHintArrow();
+        });
+    }
+
+    private void Init()
+    {
+        // hide result panel
+        resultPanel.Hide();
+
+        // clear all hints
+        _hintMoveCommands.Clear();
+
+        // request map
         apiRequestor.GetLevelData(levelData =>
         {
             _currentGridState = LevelBuilder.CreateGridStateFromRawText(levelData);
@@ -125,15 +190,14 @@ public class GameController : MonoBehaviour
         });
     }
 
-    private static Vector2Int ParseDirection(string dirStr)
+    private void ShowHintArrow()
     {
-        return dirStr switch
-        {
-            "up" => Vector2Int.up,
-            "down" => Vector2Int.down,
-            "left" => Vector2Int.left,
-            "right" => Vector2Int.right,
-            _ => Vector2Int.zero
-        };
+        boardRenderer.ShowHintArrow(true, _hintMoveCommands.Peek());
+    }
+
+    private bool IsSuccess()
+    {
+        var gridStateStr = string.Join("", _currentGridState.GetGridStateString());
+        return !gridStateStr.Contains('c');
     }
 }

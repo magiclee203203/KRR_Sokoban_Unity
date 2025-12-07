@@ -19,6 +19,7 @@ public class MoveCommand
 [Serializable]
 public class MoveCommandResp
 {
+    public bool solvable;
     public List<MoveCommand> commands;
 }
 
@@ -32,10 +33,10 @@ public class APIRequestor : MonoBehaviour
 {
     [Header("API Endpoint")] public string endpoint;
 
-    public void PostGridState(string gridState, Action<List<MoveCommand>> onCompleteCallback)
+    public void PostGridState(string gridState, Action<MoveCommandResp> onCompleteCallback)
     {
         RestClient.Post<MoveCommandResp>($"{endpoint}/solve/", new PostBody { contents = gridState })
-            .Then(res => { onCompleteCallback?.Invoke(res.commands); })
+            .Then(res => { onCompleteCallback?.Invoke(res); })
             .Catch(err => { Debug.Log("Request failed" + err); });
     }
 
