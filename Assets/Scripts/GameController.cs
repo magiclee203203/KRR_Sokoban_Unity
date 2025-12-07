@@ -115,10 +115,14 @@ public class GameController : MonoBehaviour
     private void OnAutoMove(InputAction.CallbackContext ctx)
     {
         if (_isPlayerMoving || _isAutoMoving) return;
+        
+        resultPanel.ShowThinking();
 
         // send GridState
         apiRequestor.PostGridState(_currentGridState.GetGridStateString(), async resp =>
         {
+            resultPanel.Hide();
+            
             if (!resp.solvable)
             {
                 resultPanel.ShowFail();
@@ -150,8 +154,10 @@ public class GameController : MonoBehaviour
 
     private void OnAskForHint(InputAction.CallbackContext ctx)
     {
+        if (_isPlayerMoving || _isAutoMoving) return;
+        
         resultPanel.ShowThinking();
-
+        
         apiRequestor.PostGridState(_currentGridState.GetGridStateString(), resp =>
         {
             resultPanel.Hide();
